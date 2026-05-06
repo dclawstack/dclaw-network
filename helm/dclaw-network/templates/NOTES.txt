@@ -1,0 +1,4 @@
+DClaw Network deployed!
+
+Frontend: http://dclaw-network.local
+Backend API: http://dclaw-network-backend:8132
