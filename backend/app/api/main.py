@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,12 +7,15 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.api.routes import health
 from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard
+from app.services.alert_engine import run_alert_engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    engine_task = asyncio.create_task(run_alert_engine())
     yield
+    engine_task.cancel()
 
 
 app = FastAPI(
