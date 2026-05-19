@@ -8,11 +8,11 @@
 
 ## Pre-Flight Checklist — Do This First
 
-- [ ] `frontend/package-lock.json` is committed after any `npm install` / dependency change
-- [ ] `frontend/next-env.d.ts` exists and is committed (required for Next.js TypeScript builds)
-- [ ] `frontend/.gitignore` excludes `node_modules/` and `.next/`
-- [ ] `docker-compose.yml` healthchecks use `python urllib.request.urlopen()` (backend) and `wget -q --spider` (frontend)
-- [ ] `frontend/Dockerfile` declares `ARG NEXT_PUBLIC_API_URL` before `RUN npm run build`
+- [x] `frontend/package-lock.json` is committed after any `npm install` / dependency change
+- [x] `frontend/next-env.d.ts` exists and is committed (required for Next.js TypeScript builds)
+- [x] `frontend/.gitignore` excludes `node_modules/` and `.next/`
+- [x] `docker-compose.yml` healthchecks use `python urllib.request.urlopen()` (backend) and `wget -q --spider` (frontend)
+- [x] `frontend/Dockerfile` declares `ARG NEXT_PUBLIC_API_URL` before `RUN npm run build`
 - [x] `alembic revision --autogenerate` run after every model change
 - [x] `pytest -v` passes before every commit
 
