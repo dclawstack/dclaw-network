@@ -7,7 +7,7 @@ frontend:
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 3046
+    port: 3044
   ingress:
     enabled: false
 
@@ -18,7 +18,7 @@ backend:
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
-    port: 8132
+    port: 8044
   env:
     NETWORK_DATABASE_URL: "postgresql+asyncpg://postgres:postgres@postgres:5432/dclaw_network"
 
