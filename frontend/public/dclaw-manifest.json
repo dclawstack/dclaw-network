@@ -1,0 +1,12 @@
+{
+  "app_id": "network",
+  "name": "DClaw Network",
+  "tagline": "Network monitoring, topology mapping, and AI-driven anomaly detection",
+  "category": "IT",
+  "backend_port": 8044,
+  "frontend_port": 3044,
+  "db": "dclaw_network",
+  "version": "0.1.0",
+  "color": "#F59E0B",
+  "icon": "network"
+}
