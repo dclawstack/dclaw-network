@@ -1,7 +1,8 @@
 import pytest
+import pytest_asyncio
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def device_id(client):
     r = await client.post("/api/v1/devices/", json={"hostname": "metric-dev", "ip_address": "10.8.8.1"})
     return r.json()["id"]
