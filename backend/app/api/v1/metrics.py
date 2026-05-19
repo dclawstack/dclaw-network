@@ -1,9 +1,10 @@
 import uuid
 from datetime import datetime
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.metric import MetricSample, MetricType
+from app.repositories.device_repo import DeviceRepository
 from app.repositories.metric_repo import MetricRepository
 from app.schemas.metric import MetricSampleCreate, MetricSampleRead
 from app.core.utils import utc_now
@@ -11,8 +12,14 @@ from app.core.utils import utc_now
 router = APIRouter()
 
 
+async def _require_device(device_id: uuid.UUID, db: AsyncSession) -> None:
+    if not await DeviceRepository(db).get_by_id(device_id):
+        raise HTTPException(status_code=404, detail="Device not found")
+
+
 @router.post("/", response_model=MetricSampleRead, status_code=201)
 async def ingest_metric(payload: MetricSampleCreate, db: AsyncSession = Depends(get_db)):
+    await _require_device(payload.device_id, db)
     repo = MetricRepository(db)
     sample = MetricSample(
         device_id=payload.device_id,
@@ -28,6 +35,11 @@ async def ingest_metric(payload: MetricSampleCreate, db: AsyncSession = Depends(
 async def ingest_metrics_bulk(
     payload: list[MetricSampleCreate], db: AsyncSession = Depends(get_db)
 ):
+    if not payload:
+        return
+    device_ids = {s.device_id for s in payload}
+    for device_id in device_ids:
+        await _require_device(device_id, db)
     repo = MetricRepository(db)
     samples = [
         MetricSample(

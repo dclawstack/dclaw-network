@@ -78,3 +78,25 @@ async def test_filter_alerts_by_device(client, device_id):
     response = await client.get(f"/api/v1/alerts/?device_id={device_id}")
     assert response.status_code == 200
     assert all(a["device_id"] == device_id for a in response.json())
+
+
+@pytest.mark.asyncio
+async def test_filter_alerts_by_status(client, device_id):
+    await client.post("/api/v1/alerts/", json={"device_id": device_id, "severity": "info", "title": "Open one"})
+    create = await client.post("/api/v1/alerts/", json={"device_id": device_id, "severity": "warning", "title": "Resolved one"})
+    alert_id = create.json()["id"]
+    await client.put(f"/api/v1/alerts/{alert_id}", json={"status": "resolved"})
+    response = await client.get("/api/v1/alerts/?status=resolved")
+    assert response.status_code == 200
+    assert all(a["status"] == "resolved" for a in response.json())
+
+
+@pytest.mark.asyncio
+async def test_filter_alerts_by_severity_and_status(client, device_id):
+    await client.post("/api/v1/alerts/", json={"device_id": device_id, "severity": "critical", "title": "Crit open"})
+    await client.post("/api/v1/alerts/", json={"device_id": device_id, "severity": "warning", "title": "Warn open"})
+    response = await client.get("/api/v1/alerts/?status=open&severity=critical")
+    assert response.status_code == 200
+    results = response.json()
+    assert len(results) == 1
+    assert results[0]["severity"] == "critical"

@@ -81,3 +81,23 @@ async def test_filter_devices_by_status(client):
     assert response.status_code == 200
     results = response.json()
     assert all(d["status"] == "online" for d in results)
+
+
+@pytest.mark.asyncio
+async def test_list_interfaces_device_not_found(client):
+    response = await client.get("/api/v1/devices/00000000-0000-0000-0000-000000000000/interfaces")
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_cascade_delete_removes_children(client):
+    create = await client.post("/api/v1/devices/", json={"hostname": "del-dev", "ip_address": "10.99.0.1"})
+    device_id = create.json()["id"]
+    await client.post(f"/api/v1/devices/{device_id}/interfaces", json={"name": "eth0"})
+    await client.post("/api/v1/alerts/", json={"device_id": device_id, "severity": "info", "title": "Test"})
+    await client.post("/api/v1/metrics/", json={"device_id": device_id, "metric_type": "cpu_pct", "value": 10.0})
+    del_resp = await client.delete(f"/api/v1/devices/{device_id}")
+    assert del_resp.status_code == 204
+    assert (await client.get(f"/api/v1/devices/{device_id}")).status_code == 404
+    assert (await client.get(f"/api/v1/alerts/?device_id={device_id}")).json() == []
+    assert (await client.get(f"/api/v1/metrics/?device_id={device_id}")).json() == []

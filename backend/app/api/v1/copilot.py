@@ -3,13 +3,14 @@ AI Network Copilot endpoint.
 POST /api/v1/copilot/chat
 Accepts a user message + optional device context, returns an LLM response.
 """
+import asyncio
 import json
 import logging
 import uuid
 from datetime import timedelta
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -29,7 +30,7 @@ If asked about a specific device, focus your analysis on its data."""
 
 
 class ChatRequest(BaseModel):
-    message: str
+    message: str = Field(..., max_length=4096)
     device_id: uuid.UUID | None = None
 
 
@@ -125,12 +126,14 @@ async def copilot_chat(request: ChatRequest, db: AsyncSession = Depends(get_db))
         # done sentinel
         yield "data: [DONE]\n\n"
 
-    # Try Ollama first; fall back to synchronous OpenRouter response
+    # Try Ollama first (liveness check is blocking — run in thread); fall back to OpenRouter
     try:
-        import urllib.request as _r
-        _r.urlopen(f"{settings.ollama_url}/api/tags", timeout=2).close()
+        await asyncio.to_thread(
+            lambda: __import__("urllib.request", fromlist=["urlopen"])
+            .urlopen(f"{settings.ollama_url}/api/tags", timeout=2)
+            .close()
+        )
         return StreamingResponse(generate(), media_type="text/event-stream")
     except Exception:
-        # Ollama not available — return synchronous response
-        text = _call_openrouter_sync(full_prompt)
+        text = await asyncio.to_thread(_call_openrouter_sync, full_prompt)
         return {"response": text}

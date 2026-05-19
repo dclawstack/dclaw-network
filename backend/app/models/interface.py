@@ -36,5 +36,5 @@ class Interface(Base):
 
     device: Mapped["Device"] = relationship(back_populates="interfaces", lazy="selectin")
     metrics: Mapped[list["MetricSample"]] = relationship(
-        back_populates="interface", lazy="selectin"
+        back_populates="interface", lazy="selectin", passive_deletes=True
     )

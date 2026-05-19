@@ -20,15 +20,13 @@ async def list_alerts(
     db: AsyncSession = Depends(get_db),
 ):
     repo = AlertRepository(db)
-    if device_id:
-        alerts = await repo.list_by_device(device_id)
-    elif status == AlertStatus.open and not severity:
-        alerts = await repo.list_open()
-    else:
-        alerts, _ = await repo.list_all(limit=limit, offset=offset)
-    if severity:
-        alerts = [a for a in alerts if a.severity == severity]
-    return alerts
+    return await repo.list_filtered(
+        status=status,
+        severity=severity,
+        device_id=device_id,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.post("/", response_model=AlertRead, status_code=201)

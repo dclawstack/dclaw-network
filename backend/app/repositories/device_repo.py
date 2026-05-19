@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.device import Device, DeviceStatus, DeviceType
 from app.repositories.base_repo import BaseRepository
@@ -26,10 +26,8 @@ class DeviceRepository(BaseRepository[Device]):
         return list(result.scalars().all())
 
     async def count_by_status(self) -> dict[str, int]:
-        counts: dict[str, int] = {}
-        for status in DeviceStatus:
-            result = await self.db.execute(
-                select(Device).where(Device.status == status)
-            )
-            counts[status.value] = len(result.scalars().all())
-        return counts
+        result = await self.db.execute(
+            select(Device.status, func.count()).group_by(Device.status)
+        )
+        raw = {row[0]: row[1] for row in result.all()}
+        return {status.value: raw.get(status, 0) for status in DeviceStatus}

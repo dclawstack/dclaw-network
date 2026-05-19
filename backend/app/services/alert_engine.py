@@ -13,6 +13,7 @@ from app.core.database import engine
 from app.core.utils import utc_now
 from app.models.alert import Alert, AlertSeverity, AlertStatus
 from app.models.metric import MetricSample, MetricType
+from app.models.device import Device
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,12 @@ async def _run_checks() -> None:
             if await _check_open_alert_exists(session, sample.device_id, sample.metric_type):
                 continue
 
+            dev_result = await session.execute(
+                select(Device).where(Device.id == sample.device_id)
+            )
+            device = dev_result.scalar_one_or_none()
+            hostname = device.hostname if device else "unknown"
+
             alert = Alert(
                 device_id=sample.device_id,
                 severity=severity,
@@ -78,6 +85,10 @@ async def _run_checks() -> None:
             )
             session.add(alert)
             logger.info("Alert created: device=%s metric=%s value=%.2f", sample.device_id, sample.metric_type, sample.value)
+
+            if severity == AlertSeverity.critical:
+                from app.services.webhook_service import notify_alert
+                await asyncio.to_thread(notify_alert, alert, hostname)
 
         await session.commit()
 

@@ -79,12 +79,13 @@ async def delete_device(device_id: uuid.UUID, db: AsyncSession = Depends(get_db)
 
 @router.get("/{device_id}/interfaces", response_model=list[InterfaceRead])
 async def list_device_interfaces(device_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
-    DeviceRepository(db)  # validate device exists implicitly via FK
-    repo = InterfaceRepository(db)
-    return await repo.list_by_device(device_id)
+    if not await DeviceRepository(db).get_by_id(device_id):
+        raise HTTPException(status_code=404, detail="Device not found")
+    return await InterfaceRepository(db).list_by_device(device_id)
 
 
 @router.get("/{device_id}/configs", response_model=list[NetworkConfigRead])
 async def list_device_configs(device_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
-    repo = ConfigRepository(db)
-    return await repo.list_by_device(device_id)
+    if not await DeviceRepository(db).get_by_id(device_id):
+        raise HTTPException(status_code=404, detail="Device not found")
+    return await ConfigRepository(db).list_by_device(device_id)

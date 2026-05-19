@@ -13,6 +13,9 @@ async def get_db() -> AsyncSession:
     async with AsyncSession(engine, expire_on_commit=False) as session:
         try:
             yield session
+        except Exception:
+            await session.rollback()
+            raise
         finally:
             await session.close()
 

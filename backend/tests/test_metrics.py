@@ -47,3 +47,21 @@ async def test_query_metrics_empty(client, device_id):
     response = await client.get(f"/api/v1/metrics/?device_id={device_id}")
     assert response.status_code == 200
     assert response.json() == []
+
+
+@pytest.mark.asyncio
+async def test_ingest_metric_device_not_found(client):
+    response = await client.post("/api/v1/metrics/", json={
+        "device_id": "00000000-0000-0000-0000-000000000000",
+        "metric_type": "cpu_pct",
+        "value": 50.0,
+    })
+    assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_bulk_ingest_device_not_found(client):
+    response = await client.post("/api/v1/metrics/bulk", json=[
+        {"device_id": "00000000-0000-0000-0000-000000000000", "metric_type": "cpu_pct", "value": 50.0}
+    ])
+    assert response.status_code == 404

@@ -115,47 +115,56 @@ export interface DashboardStats {
   avg_latency_ms: number | null;
 }
 
+function buildQS(params?: Record<string, string | number | boolean | undefined | null>): string {
+  if (!params) return "";
+  const entries = Object.entries(params).filter(
+    ([, v]) => v !== undefined && v !== null && v !== ""
+  ) as [string, string][];
+  return entries.length ? "?" + new URLSearchParams(entries).toString() : "";
+}
+
+async function fetchDelete(path: string): Promise<void> {
+  const url = `${API_BASE}${path}`;
+  const response = await fetch(url, { method: "DELETE" });
+  if (!response.ok && response.status !== 204) {
+    const error = await response.text();
+    throw new ApiError(`API error ${response.status}: ${error}`, response.status);
+  }
+}
+
 // ── API Functions ──────────────────────────────────────────────────────────
 
 export const api = {
   health: () => fetchJson<{ status: string }>("/health/"),
 
   // Devices
-  getDevices: (params?: { status?: DeviceStatus; device_type?: DeviceType; q?: string }) => {
-    const qs = new URLSearchParams(params as Record<string, string>).toString();
-    return fetchJson<Device[]>(`/api/v1/devices/${qs ? `?${qs}` : ""}`);
-  },
+  getDevices: (params?: { status?: DeviceStatus; device_type?: DeviceType; q?: string }) =>
+    fetchJson<Device[]>(`/api/v1/devices/${buildQS(params)}`),
   createDevice: (data: DeviceCreate) =>
     fetchJson<Device>("/api/v1/devices/", { method: "POST", body: JSON.stringify(data) }),
   getDevice: (id: string) => fetchJson<Device>(`/api/v1/devices/${id}`),
   updateDevice: (id: string, data: Partial<DeviceCreate & { status: DeviceStatus; last_seen: string }>) =>
     fetchJson<Device>(`/api/v1/devices/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteDevice: (id: string) =>
-    fetch(`${API_BASE}/api/v1/devices/${id}`, { method: "DELETE" }),
+  deleteDevice: (id: string) => fetchDelete(`/api/v1/devices/${id}`),
 
   // Interfaces
   getInterfaces: (deviceId: string) =>
     fetchJson<NetworkInterface[]>(`/api/v1/devices/${deviceId}/interfaces`),
 
   // Metrics
-  getMetrics: (params: { device_id?: string; metric_type?: MetricType; limit?: number }) => {
-    const qs = new URLSearchParams(params as Record<string, string>).toString();
-    return fetchJson<MetricSample[]>(`/api/v1/metrics/?${qs}`);
-  },
+  getMetrics: (params: { device_id?: string; metric_type?: MetricType; limit?: number }) =>
+    fetchJson<MetricSample[]>(`/api/v1/metrics/${buildQS(params)}`),
   ingestMetric: (data: { device_id: string; metric_type: MetricType; value: number }) =>
     fetchJson<MetricSample>("/api/v1/metrics/", { method: "POST", body: JSON.stringify(data) }),
 
   // Alerts
-  getAlerts: (params?: { status?: AlertStatus; severity?: AlertSeverity; device_id?: string }) => {
-    const qs = new URLSearchParams(params as Record<string, string>).toString();
-    return fetchJson<Alert[]>(`/api/v1/alerts/${qs ? `?${qs}` : ""}`);
-  },
+  getAlerts: (params?: { status?: AlertStatus; severity?: AlertSeverity; device_id?: string }) =>
+    fetchJson<Alert[]>(`/api/v1/alerts/${buildQS(params)}`),
   createAlert: (data: { device_id: string; severity: AlertSeverity; title: string; description?: string }) =>
     fetchJson<Alert>("/api/v1/alerts/", { method: "POST", body: JSON.stringify(data) }),
-  updateAlert: (id: string, data: { status?: AlertStatus; description?: string }) =>
+  updateAlert: (id: string, data: { status?: AlertStatus; severity?: AlertSeverity; title?: string; description?: string }) =>
     fetchJson<Alert>(`/api/v1/alerts/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteAlert: (id: string) =>
-    fetch(`${API_BASE}/api/v1/alerts/${id}`, { method: "DELETE" }),
+  deleteAlert: (id: string) => fetchDelete(`/api/v1/alerts/${id}`),
 
   // Configs
   getConfigs: (deviceId: string) =>
