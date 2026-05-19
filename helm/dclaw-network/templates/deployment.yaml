@@ -22,12 +22,12 @@ spec:
           image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           ports:
-            - containerPort: 3046
+            - containerPort: 3044
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           ports:
-            - containerPort: 8132
+            - containerPort: 8044
           env:
             - name: NETWORK_DATABASE_URL
               value: {{ .Values.backend.env.NETWORK_DATABASE_URL | quote }}

@@ -1,4 +1,4 @@
-# DClaw App — Agent Development Guide
+# DClaw Network — Agent Development Guide
 
 > **Read this file first before making any code changes.**
 > This document is the source of truth for architecture, anti-patterns, and development workflow.
