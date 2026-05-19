@@ -1,122 +1,157 @@
-# PRODUCT-SPEC: CRM
+# PRODUCT-SPEC: DClaw Network
 
 ## Overview
 
-**App Name:** CRM
-**Domain:** Customer Relationship Management
-**Target User:** Sales teams, account managers
+**App Name:** DClaw Network
+**Domain:** Network Monitoring & IT Operations
+**Target User:** IT operations teams, network engineers, NOC staff
 
 ## Core Entities
 
-### Customer
+### Device
 ```
-Customer
+Device
 ├── id: UUID (PK)
+├── hostname: str (required, unique)
+├── ip_address: str (required)
+├── device_type: enum ["router", "switch", "firewall", "server", "ap", "other"] (required)
+├── vendor: str (optional)
+├── model: str (optional)
+├── location: str (optional)
+├── status: enum ["online", "offline", "degraded", "unknown"] (default: "unknown")
+├── last_seen: datetime (optional)
+├── created_at: datetime
+└── updated_at: datetime
+```
+
+### Interface
+```
+Interface
+├── id: UUID (PK)
+├── device_id: UUID (FK → Device, ondelete=CASCADE)
 ├── name: str (required)
-├── email: str (unique, required)
-├── phone: str (optional)
-├── company: str (optional)
-├── status: enum ["lead", "active", "churned"] (default: "lead")
-├── notes: str (optional)
+├── description: str (optional)
+├── ip_address: str (optional)
+├── mac_address: str (optional)
+├── speed_mbps: int (optional)
+├── status: enum ["up", "down", "unknown"] (default: "unknown")
 ├── created_at: datetime
 └── updated_at: datetime
 ```
 
-### Deal
+### MetricSample
 ```
-Deal
+MetricSample
 ├── id: UUID (PK)
-├── customer_id: UUID (FK → Customer, ondelete=CASCADE)
+├── device_id: UUID (FK → Device, ondelete=CASCADE)
+├── interface_id: UUID (FK → Interface, ondelete=SET NULL, optional)
+├── metric_type: enum ["latency_ms", "packet_loss_pct", "throughput_mbps", "cpu_pct", "memory_pct"] (required)
+├── value: float (required)
+├── sampled_at: datetime (required)
+└── created_at: datetime
+```
+
+### Alert
+```
+Alert
+├── id: UUID (PK)
+├── device_id: UUID (FK → Device, ondelete=CASCADE)
+├── severity: enum ["critical", "warning", "info"] (required)
 ├── title: str (required)
-├── value: float (required, default 0)
-├── stage: enum ["prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"] (default: "prospecting")
-├── probability: int (0-100, default 0)
-├── expected_close_date: date (optional)
+├── description: str (optional)
+├── status: enum ["open", "acknowledged", "resolved"] (default: "open")
+├── acknowledged_at: datetime (optional)
+├── resolved_at: datetime (optional)
 ├── created_at: datetime
 └── updated_at: datetime
 ```
 
-### Activity
+### NetworkConfig
 ```
-Activity
+NetworkConfig
 ├── id: UUID (PK)
-├── deal_id: UUID (FK → Deal, ondelete=CASCADE, optional)
-├── customer_id: UUID (FK → Customer, ondelete=CASCADE)
-├── activity_type: enum ["call", "email", "meeting", "note"] (required)
-├── description: str (required)
-├── scheduled_at: datetime (optional)
-├── completed: bool (default false)
-├── created_at: datetime
-└── updated_at: datetime
+├── device_id: UUID (FK → Device, ondelete=CASCADE)
+├── config_text: str (required)
+├── config_hash: str (required)
+├── captured_at: datetime (required)
+├── notes: str (optional)
+└── created_at: datetime
 ```
 
 ## User Stories / Screens
 
 ### Screen 1: Dashboard
-- Summary cards: total customers, open deals, total pipeline value, win rate
-- Recent activities feed
-- Deals by stage bar chart
-- Quick action buttons (add customer, add deal, log activity)
+- Summary cards: total devices, online/offline/degraded counts, open alerts, avg latency
+- Active alerts feed (critical first)
+- Device status distribution chart
+- Recent metric trends
 
-### Screen 2: Customers
-- Table view with pagination, search by name/email/company
-- Status filter (lead/active/churned)
-- Bulk delete
-- "Add Customer" modal/form
+### Screen 2: Devices
+- Table view with pagination, search by hostname/IP/location
+- Status filter (online/offline/degraded/unknown)
+- Type filter (router/switch/firewall/server/ap)
+- "Add Device" modal/form
 
-### Screen 3: Customer Detail
-- Customer info card with edit/delete
-- Related deals list
-- Related activities timeline
-- Add deal / add activity buttons
+### Screen 3: Device Detail
+- Device info card with edit/delete
+- Interface list with status indicators
+- Recent metrics charts (latency, packet loss, throughput)
+- Active alerts for device
+- Config history timeline
 
-### Screen 4: Deals
-- Kanban board view by stage (prospecting → closed_won/lost)
-- Table view toggle
-- Search and filter by customer, stage, value
-- "Add Deal" form with customer dropdown
+### Screen 4: Alerts
+- Table view sorted by severity and created_at
+- Filter by severity (critical/warning/info) and status (open/acknowledged/resolved)
+- Acknowledge / resolve actions
+- Alert detail with root-cause notes
 
-### Screen 5: Deal Detail
-- Deal info with edit/delete
-- Probability slider
-- Related activities
-- Move stage buttons
+### Screen 5: Performance
+- Multi-device metric comparison charts
+- Time range selector (1h, 6h, 24h, 7d)
+- Top N worst performers by metric type
+- Baseline deviation indicators (AI-driven)
 
-### Screen 6: Activities
-- Timeline view of all activities
-- Filter by type, customer, deal
-- Mark complete / incomplete
+### Screen 6: Configuration
+- Per-device config history list
+- Diff view between two config snapshots
+- Compliance status badge (AI-checked)
+- Capture new config button
 
 ## AI Features
 
-- **Deal sentiment analysis:** Analyze customer emails/notes for positive/negative sentiment
-- **Next best action:** Recommend next activity based on deal stage and last contact
-- **Win probability prediction:** Use deal attributes to suggest probability score
+- **Anomaly detection:** Time-series analysis to detect abnormal latency or packet loss patterns
+- **Outage prediction:** Predict likely outages 30 min ahead based on degrading metric trends
+- **Root-cause analysis:** LLM-powered explanation of alert clusters
+- **Config compliance:** AI comparison of device configs against policy templates
 
 ## API Endpoints (v1.0)
 
 ```
-GET    /api/v1/customers          → List customers
-POST   /api/v1/customers          → Create customer
-GET    /api/v1/customers/{id}     → Get customer
-PUT    /api/v1/customers/{id}     → Update customer
-DELETE /api/v1/customers/{id}     → Delete customer
-GET    /api/v1/deals              → List deals
-POST   /api/v1/deals              → Create deal
-GET    /api/v1/deals/{id}         → Get deal
-PUT    /api/v1/deals/{id}         → Update deal
-DELETE /api/v1/deals/{id}         → Delete deal
-GET    /api/v1/activities         → List activities
-POST   /api/v1/activities         → Create activity
-GET    /api/v1/activities/{id}    → Get activity
-PUT    /api/v1/activities/{id}    → Update activity
-DELETE /api/v1/activities/{id}    → Delete activity
-GET    /api/v1/dashboard          → Dashboard stats
+GET    /api/v1/devices                        → List devices
+POST   /api/v1/devices                        → Create device
+GET    /api/v1/devices/{id}                   → Get device
+PUT    /api/v1/devices/{id}                   → Update device
+DELETE /api/v1/devices/{id}                   → Delete device
+GET    /api/v1/devices/{id}/interfaces        → List interfaces for device
+POST   /api/v1/devices/{id}/interfaces        → Create interface
+GET    /api/v1/metrics                        → List metric samples (query by device/type/range)
+POST   /api/v1/metrics                        → Ingest metric sample
+GET    /api/v1/alerts                         → List alerts
+POST   /api/v1/alerts                         → Create alert
+GET    /api/v1/alerts/{id}                    → Get alert
+PUT    /api/v1/alerts/{id}                    → Update alert (acknowledge/resolve)
+DELETE /api/v1/alerts/{id}                    → Delete alert
+GET    /api/v1/configs                        → List configs (query by device)
+POST   /api/v1/configs                        → Capture config snapshot
+GET    /api/v1/configs/{id}                   → Get config
+GET    /api/v1/dashboard                      → Dashboard summary stats
+GET    /health                                → Health check
 ```
 
 ## Non-Functional Requirements
 
 - Backend tests: 70%+ coverage
-- Frontend: Responsive, Tailwind + shadcn/ui
+- Frontend: Responsive, Tailwind + pre-built shadcn-compatible UI components
 - Docker: All services start with `docker compose up -d`
 - No mock data — everything persisted to PostgreSQL
+- Health endpoint at `/health` returning `{"status": "ok"}`
