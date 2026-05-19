@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.routes import health
-from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard
+from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard, copilot
 from app.services.alert_engine import run_alert_engine
 
 
@@ -39,3 +39,4 @@ app.include_router(metrics.router,     prefix="/api/v1/metrics",   tags=["metric
 app.include_router(alerts.router,      prefix="/api/v1/alerts",    tags=["alerts"])
 app.include_router(configs.router,     prefix="/api/v1/configs",   tags=["configs"])
 app.include_router(dashboard.router,   prefix="/api/v1/dashboard", tags=["dashboard"])
+app.include_router(copilot.router,     prefix="/api/v1/copilot",   tags=["copilot"])
