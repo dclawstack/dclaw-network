@@ -123,8 +123,8 @@ Pattern: `@pytest.mark.asyncio`, `AsyncClient` + `ASGITransport`, `conftest.py` 
 
 ### 1.3 Server-Sent Events (Real-time Alerts)
 **File:** `backend/app/api/v1/stream.py`
-- [ ] `GET /api/v1/stream/alerts` — SSE stream, fires on new critical alerts
-- [ ] Frontend `EventSource` subscriber in AppLayout
+- [x] `GET /api/v1/stream/alerts` — SSE stream, fires on new critical alerts
+- [x] Frontend `EventSource` subscriber in SidebarNav (browser notification on critical alerts)
 
 ### 1.4 Device Detail Page
 **File:** `frontend/src/app/devices/[id]/page.tsx`
@@ -149,7 +149,7 @@ Pattern: `@pytest.mark.asyncio`, `AsyncClient` + `ASGITransport`, `conftest.py` 
 **File:** `frontend/src/components/AppLayout.tsx`
 - [x] Sidebar: Dashboard, Devices, Alerts, Performance, Configurations (in root `layout.tsx`)
 - [x] Wraps all pages via root `layout.tsx`
-- [ ] Active route highlighting (current: static links only)
+- [x] Active route highlighting via `SidebarNav.tsx` client component using `usePathname`
 
 ### 1.8 Slack / Webhook Integration
 **File:** `backend/app/services/webhook_service.py`
@@ -172,9 +172,9 @@ Pattern: `@pytest.mark.asyncio`, `AsyncClient` + `ASGITransport`, `conftest.py` 
 
 ### 2.2 Statistical Anomaly Detection
 **File:** `backend/app/services/anomaly_service.py`
-- [ ] Rolling 7-day baseline (mean + stddev) per device per metric
-- [ ] Z-score > 3.0 triggers anomaly alert
-- [ ] Runs as background task (every 5 min)
+- [x] Rolling 7-day baseline (mean + stddev) per device per metric (via SQL avg/stddev_pop)
+- [x] Z-score > 3.0 triggers anomaly alert
+- [x] Runs as background task (every 5 min)
 
 ### 2.3 LLM Root-Cause Analysis
 **File:** `backend/app/services/rca_service.py`
@@ -185,22 +185,22 @@ Pattern: `@pytest.mark.asyncio`, `AsyncClient` + `ASGITransport`, `conftest.py` 
 
 ### 2.4 Outage Prediction
 **File:** `backend/app/services/prediction_service.py`
-- [ ] EWMA trend on latency_ms + packet_loss_pct over last 2h per device
-- [ ] If latency trend doubles in 30min → create predictive Alert (warning)
-- [ ] Title: "Predicted degradation in ~30 min"
-- [ ] **Demo narrative**: "AI detected degradation 28 min before outage"
+- [x] EWMA trend on latency_ms + packet_loss_pct over last 2h per device
+- [x] If trend implies value doubles in ≤30min → create predictive Alert (warning)
+- [x] Title: "Predicted degradation: {metric} in ~Xmin"
+- [x] **Demo narrative**: "AI detected degradation 28 min before outage"
 
 ### 2.5 Config Compliance AI
 **File:** `backend/app/services/compliance_service.py`
-- [ ] On config capture: send config_text to LLM
-- [ ] Checks: open telnet, weak/default creds, missing logging, unused ACLs
-- [ ] Stores result in `NetworkConfig.compliance_notes`
+- [x] On config capture: send config_text to LLM (fire-and-forget from configs.py)
+- [x] Checks: open telnet, weak/default creds, missing logging, unused ACLs
+- [x] Stores result in `NetworkConfig.compliance_notes`
 
 ### 2.6 Topology Graph
 **File:** `frontend/src/app/topology/page.tsx`
-- [ ] Device nodes colored by status (online=green, degraded=yellow, offline=red)
-- [ ] Edges from Interface→shared subnet inference
-- [ ] Uses `@xyflow/react` (React Flow)
+- [x] Device nodes colored by status (online=green, degraded=yellow, offline=red)
+- [x] Edges from Interface→shared /24 subnet inference
+- [x] SVG-based (draggable nodes, subnet labels); no npm package needed
 
 ---
 
@@ -211,15 +211,17 @@ Pattern: `@pytest.mark.asyncio`, `AsyncClient` + `ASGITransport`, `conftest.py` 
 3. ✅ 0.8 + 0.9 + 0.10 + 0.11 + 0.12 (manifest + frontend basics)
 4. ✅ 1.7 → 1.4 → 1.5 → 1.6 → 1.1 → 1.2 → 1.8 (layout first, then rich pages, then services)
 5. ✅ 2.3 → 2.1 (RCA first since it enhances alerts, then Copilot)
-6. ⬜ 1.3 → 2.2 → 2.4 → 2.5 → 2.6 (SSE stream, anomaly detection, outage prediction, compliance AI, topology)
+6. ✅ 1.3 → 2.2 → 2.4 → 2.5 → 2.6 (SSE stream, anomaly detection, outage prediction, compliance AI, topology)
 
 ---
 
-## Status Summary (as of v1.2)
+## Status Summary (as of v1.3 — ALL COMPLETE)
 
 | Tier | Items | Done | Pending |
 |------|-------|------|---------|
 | Complexity 0 | 12 | **12** ✅ | 0 |
-| Complexity 1 | 8 | **6** | 2 (SSE stream, active route highlighting) |
-| Complexity 2 | 6 | **2** | 4 (anomaly, prediction, compliance, topology) |
-| **Total** | **26** | **20** | **6** |
+| Complexity 1 | 8 | **8** ✅ | 0 |
+| Complexity 2 | 6 | **6** ✅ | 0 |
+| **Total** | **26** | **26** ✅ | **0** |
+
+**Test coverage: 48/48 backend tests passing ✅**

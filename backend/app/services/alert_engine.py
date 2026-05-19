@@ -88,7 +88,15 @@ async def _run_checks() -> None:
 
             if severity == AlertSeverity.critical:
                 from app.services.webhook_service import notify_alert
+                from app.core.event_bus import publish_alert
                 await asyncio.to_thread(notify_alert, alert, hostname)
+                await publish_alert({
+                    "type": "alert",
+                    "severity": severity.value,
+                    "title": alert.title,
+                    "device_id": str(sample.device_id),
+                    "hostname": hostname,
+                })
 
         await session.commit()
 

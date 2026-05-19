@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import uuid
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,6 +8,7 @@ from app.models.network_config import NetworkConfig
 from app.repositories.config_repo import ConfigRepository
 from app.repositories.device_repo import DeviceRepository
 from app.schemas.network_config import NetworkConfigCreate, NetworkConfigRead
+from app.services.compliance_service import run_compliance_check
 from app.core.utils import utc_now
 
 router = APIRouter()
@@ -33,7 +35,10 @@ async def capture_config(payload: NetworkConfigCreate, db: AsyncSession = Depend
         notes=payload.notes,
     )
     repo = ConfigRepository(db)
-    return await repo.create(config)
+    saved = await repo.create(config)
+    # Fire-and-forget: compliance check runs async, config returned immediately
+    asyncio.create_task(run_compliance_check(saved.id, saved.config_text))
+    return saved
 
 
 @router.get("/{config_id}", response_model=NetworkConfigRead)
