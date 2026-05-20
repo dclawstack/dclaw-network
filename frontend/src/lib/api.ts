@@ -174,6 +174,10 @@ export const api = {
 
   // Dashboard
   getDashboard: () => fetchJson<DashboardStats>("/api/v1/dashboard/"),
+
+  // Seed (demo data)
+  seedData: () => fetchJson<{ seeded: boolean; devices: number; interfaces: number; metric_samples: number; alerts: number; configs: number }>("/api/v1/seed", { method: "POST" }),
+  clearData: () => fetchJson<{ cleared: boolean }>("/api/v1/seed", { method: "DELETE" }),
 };
 
 export { ApiError };

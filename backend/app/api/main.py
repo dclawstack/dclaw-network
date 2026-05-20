@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.routes import health
-from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard, copilot, stream
+from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard, copilot, stream, seed
 from app.services.alert_engine import run_alert_engine
 from app.services.anomaly_service import run_anomaly_detector
 from app.services.prediction_service import run_prediction_service
@@ -48,3 +48,4 @@ app.include_router(configs.router,     prefix="/api/v1/configs",      tags=["con
 app.include_router(dashboard.router,   prefix="/api/v1/dashboard",    tags=["dashboard"])
 app.include_router(copilot.router,     prefix="/api/v1/copilot",      tags=["copilot"])
 app.include_router(stream.router,      prefix="/api/v1/stream",       tags=["stream"])
+app.include_router(seed.router,        prefix="/api/v1/seed",         tags=["seed"])

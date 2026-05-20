@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dclaw-network-frontend
+  namespace: dclaw-core
+  labels:
+    app.kubernetes.io/name: dclaw-network
+    app.kubernetes.io/part-of: dclaw-platform
+    app.kubernetes.io/component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: dclaw-network
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: dclaw-network
+        app.kubernetes.io/part-of: dclaw-platform
+        app.kubernetes.io/component: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: docker.io/library/dclaw-network-frontend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3044
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dclaw-network
+  namespace: dclaw-core
+  labels:
+    app.kubernetes.io/name: dclaw-network
+    app.kubernetes.io/part-of: dclaw-platform
+    app.kubernetes.io/component: frontend
+spec:
+  type: NodePort
+  ports:
+    - port: 3044
+      targetPort: http
+      nodePort: 30044
+      name: http
+  selector:
+    app.kubernetes.io/name: dclaw-network

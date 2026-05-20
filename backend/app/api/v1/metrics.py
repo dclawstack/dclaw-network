@@ -17,7 +17,7 @@ async def _require_device(device_id: uuid.UUID, db: AsyncSession) -> None:
         raise HTTPException(status_code=404, detail="Device not found")
 
 
-@router.post("/", response_model=MetricSampleRead, status_code=201)
+@router.post("", response_model=MetricSampleRead, status_code=201)
 async def ingest_metric(payload: MetricSampleCreate, db: AsyncSession = Depends(get_db)):
     await _require_device(payload.device_id, db)
     repo = MetricRepository(db)
@@ -54,7 +54,7 @@ async def ingest_metrics_bulk(
     await repo.bulk_create(samples)
 
 
-@router.get("/", response_model=list[MetricSampleRead])
+@router.get("", response_model=list[MetricSampleRead])
 async def query_metrics(
     device_id: uuid.UUID | None = Query(None),
     metric_type: MetricType | None = Query(None),

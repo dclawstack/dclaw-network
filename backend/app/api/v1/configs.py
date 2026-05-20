@@ -14,14 +14,14 @@ from app.core.utils import utc_now
 router = APIRouter()
 
 
-@router.get("/", response_model=list[NetworkConfigRead])
+@router.get("", response_model=list[NetworkConfigRead])
 async def list_configs(db: AsyncSession = Depends(get_db)):
     repo = ConfigRepository(db)
     items, _ = await repo.list_all(limit=100)
     return items
 
 
-@router.post("/", response_model=NetworkConfigRead, status_code=201)
+@router.post("", response_model=NetworkConfigRead, status_code=201)
 async def capture_config(payload: NetworkConfigCreate, db: AsyncSession = Depends(get_db)):
     device_repo = DeviceRepository(db)
     if not await device_repo.get_by_id(payload.device_id):

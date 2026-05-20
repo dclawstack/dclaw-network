@@ -5,7 +5,7 @@ const Dialog = ({ children, open, onOpenChange }: { children: React.ReactNode; o
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => onOpenChange?.(false)}>
-      <div className="relative bg-background rounded-lg shadow-lg max-w-lg w-full mx-4" onClick={e => e.stopPropagation()}>
+      <div className="relative bg-gray-900 rounded-lg shadow-lg max-w-lg w-full mx-4 border border-gray-700" onClick={e => e.stopPropagation()}>
         {children}
       </div>
     </div>

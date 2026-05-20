@@ -10,7 +10,7 @@ from app.schemas.dashboard import DashboardStats
 router = APIRouter()
 
 
-@router.get("/", response_model=DashboardStats)
+@router.get("", response_model=DashboardStats)
 async def get_dashboard(db: AsyncSession = Depends(get_db)):
     device_repo = DeviceRepository(db)
     alert_repo = AlertRepository(db)

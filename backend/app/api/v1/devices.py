@@ -15,7 +15,7 @@ from app.core.utils import utc_now
 router = APIRouter()
 
 
-@router.get("/", response_model=list[DeviceRead])
+@router.get("", response_model=list[DeviceRead])
 async def list_devices(
     status: DeviceStatus | None = Query(None),
     device_type: DeviceType | None = Query(None),
@@ -35,7 +35,7 @@ async def list_devices(
     return items
 
 
-@router.post("/", response_model=DeviceRead, status_code=201)
+@router.post("", response_model=DeviceRead, status_code=201)
 async def create_device(payload: DeviceCreate, db: AsyncSession = Depends(get_db)):
     from app.models.device import Device
     repo = DeviceRepository(db)

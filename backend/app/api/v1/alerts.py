@@ -10,7 +10,7 @@ from app.core.utils import utc_now
 router = APIRouter()
 
 
-@router.get("/", response_model=list[AlertRead])
+@router.get("", response_model=list[AlertRead])
 async def list_alerts(
     status: AlertStatus | None = Query(None),
     severity: AlertSeverity | None = Query(None),
@@ -29,7 +29,7 @@ async def list_alerts(
     )
 
 
-@router.post("/", response_model=AlertRead, status_code=201)
+@router.post("", response_model=AlertRead, status_code=201)
 async def create_alert(payload: AlertCreate, db: AsyncSession = Depends(get_db)):
     repo = AlertRepository(db)
     alert = Alert(**payload.model_dump())

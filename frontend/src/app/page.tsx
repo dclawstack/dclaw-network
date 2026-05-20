@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { SeedControls } from "@/components/SeedControls"
 
 /* ─── Icon components (inline SVG, zero dependencies) ─── */
 
@@ -501,6 +502,14 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── SEED CONTROLS — remove this block (and the SeedControls import above) to hide ── */}
+      <section className="py-12 px-6 border-t border-gray-800/60">
+        <div className="max-w-lg mx-auto">
+          <SeedControls />
+        </div>
+      </section>
+      {/* ── END SEED CONTROLS ── */}
 
       {/* ── Footer ── */}
       <footer className="border-t border-gray-800 py-10 px-6">
