@@ -22,6 +22,34 @@ Backend: http://localhost:8044
 Frontend: http://localhost:3044  
 API docs: http://localhost:8044/docs
 
+## Implemented Features
+
+### v1 — Shipped ✅
+
+| Feature | Files |
+|---------|-------|
+| Domain models (Device, Interface, MetricSample, Alert, NetworkConfig) | `backend/app/models/` |
+| Alembic migration (`001_initial_schema.py`) | `backend/alembic/versions/` |
+| Full CRUD API: devices, interfaces, metrics, alerts, configs | `backend/app/api/v1/` |
+| Dashboard stats endpoint (`GET /api/v1/dashboard`) | `backend/app/api/v1/dashboard.py` |
+| Bulk metric ingest (`POST /api/v1/metrics/bulk`) | `backend/app/api/v1/metrics.py` |
+| Threshold alert engine (background task, auto-creates alerts) | `backend/app/services/alert_engine.py` |
+| LLM root-cause analysis on alert creation | `backend/app/services/rca_service.py` |
+| Slack/webhook integration on critical alerts | `backend/app/services/webhook_service.py` |
+| AI Network Copilot (Ollama streaming + OpenRouter fallback) | `backend/app/api/v1/copilot.py` |
+| Dashboard, Devices, Alerts, Performance, Configs pages | `frontend/src/app/` |
+| Device detail page with sparklines, interfaces, alerts | `frontend/src/app/devices/[id]/` |
+| Floating AI chat widget | `frontend/src/components/CopilotWidget.tsx` |
+| 30 backend tests (all passing) | `backend/tests/` |
+
+### Planned — Next Sprint
+
+- SSE real-time alert stream (`GET /api/v1/stream/alerts`)
+- Statistical anomaly detection (Z-score baseline)
+- Outage prediction (EWMA trend analysis)
+- Config compliance AI review
+- Topology graph (React Flow)
+
 ## Documentation
 
 | Doc | Purpose |
@@ -38,7 +66,7 @@ API docs: http://localhost:8044/docs
 Pre-built UI components are in `frontend/src/components/ui/`. Installing `shadcn` v4 or `@base-ui/react` will break the Tailwind v3 build.
 
 ### DO NOT change the Postgres test port
-`backend/tests/conftest.py` uses `localhost:5432`. GitHub Actions CI maps the Postgres service to port 5432. Changing this breaks CI.
+`backend/tests/conftest.py` uses `127.0.0.1:5432`. GitHub Actions CI maps the Postgres service to port 5432. The host is `127.0.0.1` (not `localhost`) to avoid IPv6 resolution issues. Changing the port breaks CI.
 
 ### DO NOT delete `.github/workflows/ci.yml`
 Required for GitHub Actions to run tests on every push.
