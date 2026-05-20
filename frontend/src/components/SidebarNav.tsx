@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { useEffect, useRef } from "react"
 
 const navLinks = [
-  { href: "/", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/devices", label: "Devices" },
   { href: "/alerts", label: "Alerts" },
   { href: "/performance", label: "Performance" },
@@ -47,7 +47,7 @@ export function SidebarNav() {
   }, [])
 
   function isActive(href: string) {
-    if (href === "/") return pathname === "/"
+    if (href === "/dashboard") return pathname === "/dashboard"
     return pathname.startsWith(href)
   }
 
