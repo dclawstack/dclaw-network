@@ -78,7 +78,7 @@ function computeEdges(
       const s = subnet24(dev.ip_address)
       if (s) subnets.add(s)
     }
-    for (const s of subnets) {
+    for (const s of Array.from(subnets)) {
       if (!subnetMap[s]) subnetMap[s] = []
       subnetMap[s].push(dev.id)
     }
