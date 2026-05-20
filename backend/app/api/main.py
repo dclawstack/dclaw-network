@@ -6,16 +6,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
 from app.api.routes import health
-from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard, copilot
+from app.api.v1 import devices, interfaces, metrics, alerts, configs, dashboard, copilot, stream
 from app.services.alert_engine import run_alert_engine
+from app.services.anomaly_service import run_anomaly_detector
+from app.services.prediction_service import run_prediction_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    engine_task = asyncio.create_task(run_alert_engine())
+    tasks = [
+        asyncio.create_task(run_alert_engine()),
+        asyncio.create_task(run_anomaly_detector()),
+        asyncio.create_task(run_prediction_service()),
+    ]
     yield
-    engine_task.cancel()
+    for task in tasks:
+        task.cancel()
 
 
 app = FastAPI(
@@ -32,11 +39,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(health.router,      prefix="/health",           tags=["health"])
-app.include_router(devices.router,     prefix="/api/v1/devices",   tags=["devices"])
-app.include_router(interfaces.router,  prefix="/api/v1",           tags=["interfaces"])
-app.include_router(metrics.router,     prefix="/api/v1/metrics",   tags=["metrics"])
-app.include_router(alerts.router,      prefix="/api/v1/alerts",    tags=["alerts"])
-app.include_router(configs.router,     prefix="/api/v1/configs",   tags=["configs"])
-app.include_router(dashboard.router,   prefix="/api/v1/dashboard", tags=["dashboard"])
-app.include_router(copilot.router,     prefix="/api/v1/copilot",   tags=["copilot"])
+app.include_router(health.router,      prefix="/health",              tags=["health"])
+app.include_router(devices.router,     prefix="/api/v1/devices",      tags=["devices"])
+app.include_router(interfaces.router,  prefix="/api/v1",              tags=["interfaces"])
+app.include_router(metrics.router,     prefix="/api/v1/metrics",      tags=["metrics"])
+app.include_router(alerts.router,      prefix="/api/v1/alerts",       tags=["alerts"])
+app.include_router(configs.router,     prefix="/api/v1/configs",      tags=["configs"])
+app.include_router(dashboard.router,   prefix="/api/v1/dashboard",    tags=["dashboard"])
+app.include_router(copilot.router,     prefix="/api/v1/copilot",      tags=["copilot"])
+app.include_router(stream.router,      prefix="/api/v1/stream",       tags=["stream"])
