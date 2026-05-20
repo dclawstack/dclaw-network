@@ -2,36 +2,34 @@
 import asyncio
 import pytest
 
-from app.core.event_bus import get_alert_queue, publish_alert, format_sse
+from app.core.event_bus import subscribe, unsubscribe, publish_alert, format_sse
 
 
 @pytest.mark.asyncio
 async def test_event_bus_publish_and_receive(setup_db):
-    """publish_alert puts a payload on the queue; get_alert_queue retrieves it."""
-    q = get_alert_queue()
-    # Drain any leftover events from other tests
-    while not q.empty():
-        q.get_nowait()
-
-    payload = {"type": "alert", "severity": "critical", "title": "Queue test"}
-    await publish_alert(payload)
-    received = q.get_nowait()
-    assert received == payload
+    """publish_alert fans out to a subscribed queue."""
+    q = subscribe()
+    try:
+        payload = {"type": "alert", "severity": "critical", "title": "Queue test"}
+        await publish_alert(payload)
+        received = q.get_nowait()
+        assert received == payload
+    finally:
+        unsubscribe(q)
 
 
 @pytest.mark.asyncio
 async def test_event_bus_full_queue_drops_oldest(setup_db):
-    """When queue is full, oldest event is dropped to make room for newest."""
+    """When a subscriber queue is full, oldest event is dropped to make room for newest."""
     from app.core import event_bus
-    original = event_bus._alert_queue
-    event_bus._alert_queue = asyncio.Queue(maxsize=2)
+    q = asyncio.Queue(maxsize=2)
+    event_bus._subscribers.add(q)
 
     try:
         await publish_alert({"id": 1})
         await publish_alert({"id": 2})
         await publish_alert({"id": 3})  # should drop id=1
 
-        q = event_bus._alert_queue
         items = []
         while not q.empty():
             items.append(q.get_nowait())
@@ -39,7 +37,7 @@ async def test_event_bus_full_queue_drops_oldest(setup_db):
         assert len(items) == 2
         assert all(item["id"] in (2, 3) for item in items)
     finally:
-        event_bus._alert_queue = original
+        event_bus._subscribers.discard(q)
 
 
 def test_format_sse_encoding():

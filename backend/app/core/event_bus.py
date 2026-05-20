@@ -1,33 +1,42 @@
 """
 Shared in-process event bus for real-time notifications.
-Uses a module-level asyncio.Queue so both the alert engine (background task)
-and the SSE stream endpoint can share events without circular imports.
+Uses a broadcaster pattern: publish_alert fans out to every active SSE client queue.
 """
 import asyncio
 import json
 from typing import Any
 
-_alert_queue: asyncio.Queue | None = None
+# Set of per-client queues; SSE connections register/deregister their own queue
+_subscribers: set[asyncio.Queue] = set()
 
 
-def get_alert_queue() -> asyncio.Queue:
-    global _alert_queue
-    if _alert_queue is None:
-        _alert_queue = asyncio.Queue(maxsize=256)
-    return _alert_queue
+def subscribe() -> asyncio.Queue:
+    """Register a new SSE client and return its dedicated queue."""
+    q: asyncio.Queue = asyncio.Queue(maxsize=64)
+    _subscribers.add(q)
+    return q
+
+
+def unsubscribe(q: asyncio.Queue) -> None:
+    """Deregister a client queue when the SSE connection closes."""
+    _subscribers.discard(q)
 
 
 async def publish_alert(payload: dict[str, Any]) -> None:
-    q = get_alert_queue()
-    try:
-        q.put_nowait(payload)
-    except asyncio.QueueFull:
-        # Drop oldest, add newest — never block the alert engine
+    """Fan out payload to every connected SSE client. Drops oldest if a client queue is full."""
+    for q in list(_subscribers):
         try:
-            q.get_nowait()
-        except asyncio.QueueEmpty:
-            pass
-        q.put_nowait(payload)
+            q.put_nowait(payload)
+        except asyncio.QueueFull:
+            # Drop oldest event for this slow client, then add newest
+            try:
+                q.get_nowait()
+            except asyncio.QueueEmpty:
+                pass
+            try:
+                q.put_nowait(payload)
+            except asyncio.QueueFull:
+                pass
 
 
 def format_sse(data: dict[str, Any]) -> str:

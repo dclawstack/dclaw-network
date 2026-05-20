@@ -6,7 +6,6 @@ Z-score > 3.0 triggers an anomaly Alert.
 """
 import asyncio
 import logging
-import math
 from datetime import timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -77,13 +76,20 @@ async def _open_anomaly_exists(
 async def _run_anomaly_checks() -> None:
     window = utc_now() - timedelta(minutes=10)
     async with AsyncSession(engine, expire_on_commit=False) as session:
-        # Get all (device_id, metric_type) pairs with recent samples
-        result = await session.execute(
-            select(MetricSample.device_id, MetricSample.metric_type, MetricSample.value)
-            .where(MetricSample.sampled_at >= window)
-            .distinct(MetricSample.device_id, MetricSample.metric_type)
+        # Get the LATEST value per (device_id, metric_type) with a recent sample.
+        # DISTINCT ON is PostgreSQL-specific and gives us the latest row per group.
+        from sqlalchemy import text
+        raw = await session.execute(
+            text(
+                "SELECT DISTINCT ON (device_id, metric_type) "
+                "device_id, metric_type, value "
+                "FROM metric_samples "
+                "WHERE sampled_at >= :cutoff "
+                "ORDER BY device_id, metric_type, sampled_at DESC"
+            ),
+            {"cutoff": window},
         )
-        recent = result.all()
+        recent = raw.all()
 
         for device_id, metric_type, latest_value in recent:
             n = await _count_recent_samples(session, device_id, metric_type)
